@@ -1,0 +1,14 @@
+# PromptINJ — Streamlit theme
+# Place this file at: PromptINJ/.streamlit/config.toml
+
+[theme]
+base = "dark"
+primaryColor = "#2D6BE4"
+backgroundColor = "#0E1117"
+secondaryBackgroundColor = "#1A1D23"
+textColor = "#FAFAFA"
+font = "sans serif"
+
+[server]
+headless = true
+runOnSave = true

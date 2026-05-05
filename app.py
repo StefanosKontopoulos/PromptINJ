@@ -10,6 +10,7 @@ import docx  # python-docx — DOCX scanning (DOCX-01, DOCX-02, DOCX-03)
 from docx.shared import Pt, RGBColor
 import fitz  # PyMuPDF — PDF scanning (PDF-01, PDF-02)
 import streamlit as st
+from theme_css import THEME_CSS
 
 # ---------------------------------------------------------------------------
 # Invisible Unicode characters used in prompt injection watermarks (UNIC-01)
@@ -33,6 +34,7 @@ st.set_page_config(
     page_icon="\U0001f50d",  # 🔍 as escape to keep file ASCII-safe
     layout="centered",
 )
+st.markdown(THEME_CSS, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Session state initialisation
@@ -121,6 +123,8 @@ def scan_pdf(uploaded_file):
     try:
         data = uploaded_file.read()
         doc = fitz.open(stream=data, filetype="pdf")
+        # Group span text by (method, page) so full sentences appear together
+        grouped = {}  # (method, page_num) -> [text fragments]
         for page_num, page in enumerate(doc, start=1):
             page_dict = page.get_text("dict")
             for block in page_dict.get("blocks", []):
@@ -133,24 +137,18 @@ def scan_pdf(uploaded_file):
                             continue
                         size = span.get("size", 999.0)
                         color = span.get("color", -1)
-                        if size < 4.0:  # PDF-01
-                            findings.append(
-                                {
-                                    "method": "Tiny font",
-                                    "text": text,
-                                    "page": page_num,
-                                }
-                            )
+                        methods = []
+                        if size < 4.0:       # PDF-01
+                            methods.append("Tiny font")
                         if color == 16777215:  # PDF-02: 0xFFFFFF white
-                            findings.append(
-                                {
-                                    "method": "White text",
-                                    "text": text,
-                                    "page": page_num,
-                                }
-                            )
+                            methods.append("White text")
+                        if methods:
+                            key = (", ".join(methods), page_num)
+                            grouped.setdefault(key, []).append(text)
+        for (method, page_num), fragments in grouped.items():
+            findings.append({"method": method, "text": " ".join(fragments), "page": page_num})
         # Unicode scan on full document text
-        full_text = doc.get_text()
+        full_text = "".join(page.get_text() for page in doc)
         findings.extend(detect_invisible_unicode(full_text))
         doc.close()
         return {
