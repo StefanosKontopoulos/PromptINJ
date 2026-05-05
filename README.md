@@ -2,7 +2,9 @@
 
 **Trojan Prompt / Honeypot Detector**
 
-A local forensic tool that scans assignment files for hidden AI-trap instructions professors may embed to catch students using AI assistants. Upload a file — know in seconds whether it's clean.
+A forensic tool that scans assignment files for hidden AI-trap instructions professors may embed to catch students using AI assistants. Upload a file — know in seconds whether it's clean.
+
+**[→ Try it online](https://promptinj.streamlit.app)** · No install needed
 
 ---
 
@@ -11,7 +13,7 @@ A local forensic tool that scans assignment files for hidden AI-trap instruction
 | Method | File types | Description |
 |--------|-----------|-------------|
 | Tiny font | PDF, DOCX | Text rendered below 4pt — invisible to the naked eye |
-| Near-white text | PDF, DOCX | Text colored white or near-white (#E6E6E6+) against a white background |
+| Near-white text | PDF, DOCX | Text colored white or near-white against a white background |
 | Hidden property | DOCX | Runs with `font.hidden = True` set in Word's XML |
 | Invisible Unicode | PDF, DOCX, TXT | Zero-width spaces, soft hyphens, and other non-printing characters |
 
@@ -19,7 +21,13 @@ Each finding is rated **🔴 High** or **🟡 Medium** confidence and shows the 
 
 ---
 
-## How to run
+## Use it
+
+### Online (easiest)
+Visit **[promptinj.streamlit.app](https://promptinj.streamlit.app)** — no install, works in any browser.
+> Files are processed on Streamlit's servers and are not stored or logged. For full privacy, run locally.
+
+### Local (full privacy + folder scanner)
 
 **Requirements:** Python 3.10+
 
@@ -30,18 +38,20 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The app opens at `http://localhost:8501`. Everything runs locally — no files leave your machine.
+The app opens at `http://localhost:8501`. Files never leave your machine.
 
 ---
 
 ## Features
 
-- **Drag-and-drop upload** — scan individual PDF, DOCX, or TXT files
-- **Folder scanner** — paste a folder path (or use the 📁 picker) to scan all supported files at once
-- **Confidence scoring** — High for definitive traps, Medium for ambiguous near-white colors
-- **Adjustable sensitivity** — slider in the sidebar controls the near-white detection threshold
-- **Session scan history** — sidebar tracks all files scanned in the current session
-- **No internet required** — fully offline, no accounts, no APIs
+| | Online | Local |
+|--|:--:|:--:|
+| Drag-and-drop file upload | ✅ | ✅ |
+| Confidence scoring (High / Medium) | ✅ | ✅ |
+| Adjustable near-white sensitivity | ✅ | ✅ |
+| Session scan history | ✅ | ✅ |
+| Folder scanner (scan all files at once) | ❌ | ✅ |
+| Files stay on your machine | ❌ | ✅ |
 
 ---
 
