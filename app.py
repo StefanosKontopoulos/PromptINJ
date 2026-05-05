@@ -112,11 +112,21 @@ def scan_txt(uploaded_file):
         }
 
 
+def _is_near_white(color_int):
+    """Return True if an RGB integer color is near-white (all channels >= 230)."""
+    if color_int < 0:
+        return False
+    r = (color_int >> 16) & 0xFF
+    g = (color_int >> 8) & 0xFF
+    b = color_int & 0xFF
+    return r >= 230 and g >= 230 and b >= 230
+
+
 def scan_pdf(uploaded_file):
     """
     Scan a PDF for hidden text:
-      - Font size < 4pt   (PDF-01)
-      - White text color  (PDF-02, integer 16777215 == 0xFFFFFF)
+      - Font size < 4pt            (PDF-01)
+      - Near-white text color      (PDF-02, any RGB with all channels >= 230)
     Also runs invisible Unicode scan on the full extracted text.  (UNIC-01)
     """
     findings = []
@@ -138,10 +148,10 @@ def scan_pdf(uploaded_file):
                         size = span.get("size", 999.0)
                         color = span.get("color", -1)
                         methods = []
-                        if size < 4.0:       # PDF-01
+                        if size < 4.0:           # PDF-01
                             methods.append("Tiny font")
-                        if color == 16777215:  # PDF-02: 0xFFFFFF white
-                            methods.append("White text")
+                        if _is_near_white(color):  # PDF-02: near-white
+                            methods.append("Near-white text")
                         if methods:
                             key = (", ".join(methods), page_num)
                             grouped.setdefault(key, []).append(text)
@@ -168,44 +178,43 @@ def scan_pdf(uploaded_file):
 def scan_docx(uploaded_file):
     """
     Scan a DOCX for hidden text runs using three detection methods:
-      - Hidden property (run.font.hidden == True)           DOCX-01
-      - Tiny font (run.font.size < Pt(4), i.e. < 50800 EMU) DOCX-02
-      - White font color (RGB #FFFFFF)                       DOCX-03
-    Also runs invisible Unicode scan on concatenated text.   UNIC-01
+      - Hidden property (run.font.hidden == True)              DOCX-01
+      - Tiny font (run.font.size < Pt(4), i.e. < 50800 EMU)   DOCX-02
+      - Near-white font color (all RGB channels >= 230)         DOCX-03
+    Also runs invisible Unicode scan on concatenated text.      UNIC-01
+    Runs are grouped by method so full sentences appear together.
     """
     findings = []
     try:
         data = uploaded_file.read()
         document = docx.Document(io.BytesIO(data))
         full_text_parts = []
+        grouped = {}  # method -> [text fragments]
         for para in document.paragraphs:
             for run in para.runs:
                 text = run.text
                 if not text.strip():
                     continue
                 full_text_parts.append(text)
+                methods = []
                 # Hidden property (DOCX-01)
                 if run.font.hidden:
-                    findings.append(
-                        {"method": "Hidden property", "text": text, "page": None}
-                    )
-                # Tiny font — size is in EMU; Pt(4) == 50800 EMU (DOCX-02)
+                    methods.append("Hidden property")
+                # Tiny font (DOCX-02)
                 if run.font.size is not None and run.font.size < Pt(4):
-                    findings.append(
-                        {"method": "Tiny font", "text": text, "page": None}
-                    )
-                # White font color (DOCX-03)
+                    methods.append("Tiny font")
+                # Near-white color (DOCX-03)
                 try:
-                    if (
-                        run.font.color is not None
-                        and run.font.color.type is not None
-                        and run.font.color.rgb == RGBColor(0xFF, 0xFF, 0xFF)
-                    ):
-                        findings.append(
-                            {"method": "White text", "text": text, "page": None}
-                        )
+                    if run.font.color is not None and run.font.color.type is not None:
+                        rgb = run.font.color.rgb
+                        if rgb.red >= 230 and rgb.green >= 230 and rgb.blue >= 230:
+                            methods.append("Near-white text")
                 except Exception:
                     pass  # color.rgb raises for theme colors — skip gracefully
+                for method in methods:
+                    grouped.setdefault(method, []).append(text)
+        for method, fragments in grouped.items():
+            findings.append({"method": method, "text": " ".join(fragments), "page": None})
         # Unicode scan on concatenated paragraph text
         findings.extend(detect_invisible_unicode(" ".join(full_text_parts)))
         return {
