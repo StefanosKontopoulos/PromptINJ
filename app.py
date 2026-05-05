@@ -396,7 +396,8 @@ with col_browse:
 with col_scan:
     scan_clicked = st.button("Scan")
 
-if scan_clicked and folder_path:
+scan_clicked_with_path = scan_clicked and folder_path
+if scan_clicked_with_path:
     if not os.path.isdir(folder_path):
         st.error(f"Not a valid folder path: {folder_path}")
     else:
@@ -422,3 +423,79 @@ if scan_clicked and folder_path:
                 result = scan_file(local_file, threshold)
                 st.session_state.scan_history.append(result)
                 display_result(result)
+
+# ---------------------------------------------------------------------------
+# About
+# ---------------------------------------------------------------------------
+# Replace SUPPORT_URL with your actual Google Forms link
+SUPPORT_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfCUYYuoeH3Jv0TlJtZl_0BVxN7hZtbg5U75woTTcYngCWl3Q/viewform"
+GITHUB_URL = "https://github.com/StefanosKontopoulos/PromptINJ"
+
+st.markdown("---")
+st.markdown(
+    f"""
+    <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1.5rem 0 0.5rem 0;
+        gap: 2rem;
+    ">
+        <div style="flex: 2;">
+            <div style="
+                font-family: 'JetBrains Mono', ui-monospace, monospace;
+                font-size: 11px;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: #7A8FAD;
+                margin-bottom: 0.4rem;
+            ">About</div>
+            <div style="font-size: 13px; color: #FAFAFA; font-weight: 600; margin-bottom: 0.3rem;">
+                PromptINJ
+            </div>
+            <div style="font-size: 12px; color: #7A8FAD; line-height: 1.6;">
+                A local forensic tool for detecting hidden AI-trap instructions<br>
+                embedded in assignment files. Runs entirely on your machine —<br>
+                no uploads, no accounts, no external APIs.
+            </div>
+        </div>
+        <div style="flex: 1;">
+            <div style="
+                font-family: 'JetBrains Mono', ui-monospace, monospace;
+                font-size: 11px;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: #7A8FAD;
+                margin-bottom: 0.6rem;
+            ">Links</div>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                <a href="{GITHUB_URL}" target="_blank" style="
+                    font-size: 12.5px;
+                    color: #2D6BE4;
+                    text-decoration: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                ">⬡ GitHub — Source code</a>
+                <a href="{SUPPORT_URL}" target="_blank" style="
+                    font-size: 12.5px;
+                    color: #2D6BE4;
+                    text-decoration: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                ">✉ Support — Report an issue</a>
+            </div>
+        </div>
+    </div>
+    <div style="
+        font-size: 11px;
+        color: #3A4556;
+        padding-top: 1rem;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+    ">
+        stefankontopoulos@gmail.com
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
